@@ -52,7 +52,7 @@ main { position: relative; z-index: 1; }
 [data-anim="fade-left"] { transform: translateX(48px) translateY(0); }
 [data-anim].is-visible {
   opacity: 1;
-  transform: none;
+  transform: var(--cms-translate, none);
 }
 
 /* --- Nav --- */
