@@ -12,6 +12,8 @@
   var ORIGIN = window.location.origin;
   var cmsParentOrigin = params.get("parentOrigin") || null;
 
+  var HAND_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"/><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>';
+
   function resolveUrl(raw) {
     if (!raw) return "";
     if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
@@ -101,8 +103,7 @@
 
   /* ============================================================
      FLOATING CMS TOOLBAR
-     Single toolbar on <body>, positioned near hovered element.
-     No handles/buttons inside DOM elements — zero DOM pollution.
+     Single toolbar on <body>, centered ON the hovered element.
      ============================================================ */
   var cmsControls = new Map();
   var toolbar = null;
@@ -158,23 +159,41 @@
     tbTarget = el;
     toolbar.innerHTML = "";
 
+    var isMedia = !!config.cropContainer;
+
+    /* Déplacer button — always shown, with hand SVG */
     if (config.canMove) {
       var grip = document.createElement("button");
       grip.className = "cms-tb-btn cms-tb-grip";
-      grip.textContent = "\u2630 D\u00e9placer";
+      grip.innerHTML = HAND_SVG + " D\u00e9placer";
+
       grip.addEventListener("mousedown", function (e) {
         e.preventDefault(); e.stopPropagation(); hideToolbar();
-        if (config.isCard) startCardMove(el, config.cardIdx, e.clientX, e.clientY);
-        else startMove(el, config.section, config.posField, e.clientX, e.clientY);
+        if (isMedia) {
+          var container = document.getElementById(config.cropContainer);
+          if (container) startCrop(container, config.cropSection, config.cropPosField, e.clientX, e.clientY);
+        } else if (config.isCard) {
+          startCardMove(el, config.cardIdx, e.clientX, e.clientY);
+        } else {
+          startMove(el, config.section, config.posField, e.clientX, e.clientY);
+        }
       });
       grip.addEventListener("touchstart", function (e) {
         if (e.touches.length !== 1) return; e.stopPropagation(); hideToolbar();
-        if (config.isCard) startCardMove(el, config.cardIdx, e.touches[0].clientX, e.touches[0].clientY);
-        else startMove(el, config.section, config.posField, e.touches[0].clientX, e.touches[0].clientY);
+        var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+        if (isMedia) {
+          var container = document.getElementById(config.cropContainer);
+          if (container) startCrop(container, config.cropSection, config.cropPosField, tx, ty);
+        } else if (config.isCard) {
+          startCardMove(el, config.cardIdx, tx, ty);
+        } else {
+          startMove(el, config.section, config.posField, tx, ty);
+        }
       }, { passive: true });
       toolbar.appendChild(grip);
     }
 
+    /* Remplacer button */
     if (config.uploadKey) {
       var btnR = document.createElement("button");
       btnR.className = "cms-tb-btn";
@@ -186,18 +205,7 @@
       toolbar.appendChild(btnR);
     }
 
-    if (config.cropContainer) {
-      var btnC = document.createElement("button");
-      btnC.className = "cms-tb-btn";
-      btnC.textContent = "\u2702 Recadrer";
-      btnC.addEventListener("mousedown", function (e) {
-        e.stopPropagation(); e.preventDefault(); hideToolbar();
-        var container = document.getElementById(config.cropContainer);
-        if (container) startCrop(container, config.cropSection, config.cropPosField, e.clientX, e.clientY);
-      });
-      toolbar.appendChild(btnC);
-    }
-
+    /* Miniature button (poster) */
     if (config.hasPoster) {
       var btnP = document.createElement("button");
       btnP.className = "cms-tb-btn";
@@ -218,9 +226,7 @@
     var rect = el.getBoundingClientRect();
     toolbar.style.display = "flex";
     var tbH = toolbar.offsetHeight || 40;
-    var top = rect.top - tbH - 10;
-    if (top < 4) top = rect.bottom + 10;
-    toolbar.style.top = top + "px";
+    toolbar.style.top = (rect.top + rect.height / 2 - tbH / 2) + "px";
     toolbar.style.left = (rect.left + rect.width / 2) + "px";
     toolbar.style.transform = "translateX(-50%)";
   }
@@ -328,8 +334,8 @@
     applyPos(".hero__badge", d.badgePosition);
     applyPos(".hero__content", d.contentPosition);
     registerControl(document.getElementById("hero-media-zone"), {
-      uploadKey: "hero", cropContainer: "hero-media",
-      cropSection: "hero", cropPosField: "imagePosition"
+      canMove: true, uploadKey: "hero",
+      cropContainer: "hero-media", cropSection: "hero", cropPosField: "imagePosition"
     });
     registerControl(document.getElementById("hero-title"), { canMove: true, section: "hero", posField: "titlePosition" });
     registerControl(document.getElementById("hero-subtitle"), { canMove: true, section: "hero", posField: "subtitlePosition" });
@@ -355,8 +361,8 @@
     }
     applyPos("#video-loop-title", d.titlePosition);
     registerControl(document.getElementById("videoLoop"), {
-      uploadKey: "videoLoop-video", cropContainer: "video-loop-media",
-      cropSection: "videoLoop", cropPosField: "videoPosition"
+      canMove: true, uploadKey: "videoLoop-video",
+      cropContainer: "video-loop-media", cropSection: "videoLoop", cropPosField: "videoPosition"
     });
     registerControl(document.getElementById("video-loop-title"), { canMove: true, section: "videoLoop", posField: "titlePosition" });
   }
@@ -384,7 +390,7 @@
     applyPos("#video-play-title", d.titlePosition);
     applyPos(".video-play__label", d.labelPosition);
     registerControl(document.getElementById("video-play-media"), {
-      uploadKey: "videoPlay-video", hasPoster: true,
+      canMove: true, uploadKey: "videoPlay-video", hasPoster: true,
       cropContainer: "video-play-media", cropSection: "videoPlay", cropPosField: "videoPosition"
     });
     registerControl(document.getElementById("video-play-title"), { canMove: true, section: "videoPlay", posField: "titlePosition" });
@@ -397,7 +403,7 @@
     setTxt("about-title", d.title);
     setTxt("about-text", d.text);
     var ey = document.querySelector(".about__eyebrow");
-    if (ey) ey.textContent = d.eyebrow || "À propos";
+    if (ey) ey.textContent = d.eyebrow || "\u00C0 propos";
     var c = document.getElementById("about-media");
     if (c) {
       c.innerHTML = "";
@@ -414,8 +420,8 @@
     applyPos("#about-text", d.textPosition);
     applyPos(".about__eyebrow", d.eyebrowPosition);
     registerControl(document.getElementById("about-media-zone"), {
-      uploadKey: "about", cropContainer: "about-media",
-      cropSection: "about", cropPosField: "imagePosition"
+      canMove: true, uploadKey: "about",
+      cropContainer: "about-media", cropSection: "about", cropPosField: "imagePosition"
     });
     registerControl(document.getElementById("about-title"), { canMove: true, section: "about", posField: "titlePosition" });
     registerControl(document.getElementById("about-text"), { canMove: true, section: "about", posField: "textPosition" });
@@ -568,7 +574,7 @@
   }
 
   /* ============================================================
-     CROP SYSTEM (object-position)
+     CROP SYSTEM (object-position for media)
      ============================================================ */
   var cropState = null;
 
@@ -626,21 +632,37 @@
   }
 
   /* ============================================================
-     MOVE SYSTEM (translate elements)
+     MOVE SYSTEM (translate elements) — with snap
      ============================================================ */
   var moveState = null;
 
+  function computeTranslateSnap(nx, ny, elRect, parentRect, ox, oy) {
+    if (!parentRect || !elRect) return { x: nx, y: ny, sx: -1, sy: -1 };
+    var baseCX = elRect.left + elRect.width / 2 - ox - parentRect.left;
+    var baseCY = elRect.top + elRect.height / 2 - oy - parentRect.top;
+    var ecx = (baseCX + nx) / parentRect.width * 100;
+    var ecy = (baseCY + ny) / parentRect.height * 100;
+    var s = snapVal(ecx, ecy);
+    var rx = nx, ry = ny;
+    if (Math.abs(s.x - ecx) > 0.01) rx = s.x / 100 * parentRect.width - baseCX;
+    if (Math.abs(s.y - ecy) > 0.01) ry = s.y / 100 * parentRect.height - baseCY;
+    return { x: rx, y: ry, sx: s.x, sy: s.y };
+  }
+
   function startMove(el, section, posField, cx, cy) {
+    var parent = el.closest("[data-section]") || el.parentElement;
     moveState = {
       el: el, section: section, posField: posField,
       sx: cx, sy: cy,
       ox: parseFloat(el.dataset.cmsPosX) || 0,
-      oy: parseFloat(el.dataset.cmsPosY) || 0
+      oy: parseFloat(el.dataset.cmsPosY) || 0,
+      elRect: el.getBoundingClientRect(),
+      parentRect: parent ? parent.getBoundingClientRect() : null
     };
     el.classList.add("cms-moving");
     document.body.style.userSelect = "none";
     document.body.style.cursor = "grabbing";
-    showSnapGrid(el.closest("[data-section]") || el.parentElement);
+    showSnapGrid(parent || el.parentElement);
   }
 
   document.addEventListener("mousemove", function (e) {
@@ -651,8 +673,11 @@
   }, { passive: false });
 
   function handleMove(cx, cy) {
-    var nx = moveState.ox + (cx - moveState.sx);
-    var ny = moveState.oy + (cy - moveState.sy);
+    var rawX = moveState.ox + (cx - moveState.sx);
+    var rawY = moveState.oy + (cy - moveState.sy);
+    var snap = computeTranslateSnap(rawX, rawY, moveState.elRect, moveState.parentRect, moveState.ox, moveState.oy);
+    var nx = snap.x, ny = snap.y;
+    updateSnapUI(snap.sx, snap.sy);
     var t = "translate(" + nx + "px, " + ny + "px)";
     moveState.el.style.transform = t;
     moveState.el.style.setProperty("--cms-translate", t);
@@ -681,37 +706,38 @@
   var cardMoveState = null;
 
   function startCardMove(card, idx, cx, cy) {
+    var parent = card.closest("[data-section]") || card.parentElement;
     cardMoveState = {
       card: card, idx: idx, sx: cx, sy: cy,
       ox: parseFloat(card.dataset.cmsPosX) || 0,
-      oy: parseFloat(card.dataset.cmsPosY) || 0
+      oy: parseFloat(card.dataset.cmsPosY) || 0,
+      elRect: card.getBoundingClientRect(),
+      parentRect: parent ? parent.getBoundingClientRect() : null
     };
     card.classList.add("cms-moving");
     document.body.style.userSelect = "none";
     document.body.style.cursor = "grabbing";
-    showSnapGrid(card.closest("[data-section]") || card.parentElement);
+    showSnapGrid(parent || card.parentElement);
+  }
+
+  function handleCardMove(cx, cy) {
+    var rawX = cardMoveState.ox + (cx - cardMoveState.sx);
+    var rawY = cardMoveState.oy + (cy - cardMoveState.sy);
+    var snap = computeTranslateSnap(rawX, rawY, cardMoveState.elRect, cardMoveState.parentRect, cardMoveState.ox, cardMoveState.oy);
+    var nx = snap.x, ny = snap.y;
+    updateSnapUI(snap.sx, snap.sy);
+    var t = "translate(" + nx + "px, " + ny + "px)";
+    cardMoveState.card.style.transform = t;
+    cardMoveState.card.style.setProperty("--cms-translate", t);
+    cardMoveState.card.dataset.cmsPosX = nx;
+    cardMoveState.card.dataset.cmsPosY = ny;
   }
 
   document.addEventListener("mousemove", function (e) {
-    if (!cardMoveState) return;
-    var nx = cardMoveState.ox + (e.clientX - cardMoveState.sx);
-    var ny = cardMoveState.oy + (e.clientY - cardMoveState.sy);
-    var t = "translate(" + nx + "px, " + ny + "px)";
-    cardMoveState.card.style.transform = t;
-    cardMoveState.card.style.setProperty("--cms-translate", t);
-    cardMoveState.card.dataset.cmsPosX = nx;
-    cardMoveState.card.dataset.cmsPosY = ny;
+    if (cardMoveState) handleCardMove(e.clientX, e.clientY);
   });
   document.addEventListener("touchmove", function (e) {
-    if (!cardMoveState || e.touches.length !== 1) return;
-    e.preventDefault();
-    var nx = cardMoveState.ox + (e.touches[0].clientX - cardMoveState.sx);
-    var ny = cardMoveState.oy + (e.touches[0].clientY - cardMoveState.sy);
-    var t = "translate(" + nx + "px, " + ny + "px)";
-    cardMoveState.card.style.transform = t;
-    cardMoveState.card.style.setProperty("--cms-translate", t);
-    cardMoveState.card.dataset.cmsPosX = nx;
-    cardMoveState.card.dataset.cmsPosY = ny;
+    if (cardMoveState && e.touches.length === 1) { e.preventDefault(); handleCardMove(e.touches[0].clientX, e.touches[0].clientY); }
   }, { passive: false });
   document.addEventListener("mouseup", endCardMove);
   document.addEventListener("touchend", endCardMove);
@@ -780,7 +806,7 @@
   }
 
   function updateSnapUI(x, y) {
-    if (!snapOverlay) return;
+    if (!snapOverlay || x < 0) return;
     snapOverlay.querySelectorAll(".cms-snap-v,.cms-snap-h").forEach(function (l) {
       var p = parseFloat(l.dataset.p);
       var val = l.classList.contains("cms-snap-v") ? x : y;
@@ -848,6 +874,7 @@
       '.cms-tb-grip { cursor: grab; border-color: rgba(196,165,90,.5); color: var(--gold); }',
       '.cms-tb-grip:hover { background: rgba(196,165,90,.3); }',
       '.cms-tb-grip:active { cursor: grabbing; }',
+      '.cms-tb-grip svg { flex-shrink: 0; }',
 
       '.cms-moving { opacity: .85; z-index: 50 !important; }',
       '.cms-cropping { cursor: grabbing !important; }',
