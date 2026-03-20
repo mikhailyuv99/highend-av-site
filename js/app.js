@@ -197,7 +197,10 @@
     var temp = items[fromIdx];
     items[fromIdx] = items[toIdx];
     items[toIdx] = temp;
+    d.services.items = items;
     hideToolbar();
+    renderServices(d.services);
+    wireServiceCards();
     postToParent({ type: "CMS_PATCH", source: "cms-site", pageSlug: currentSlug, patch: { services: { items: items } } });
   }
 
@@ -368,7 +371,7 @@
     if (!media) return;
     var x = pos ? (pos.x != null ? pos.x : 50) : 50;
     var y = pos ? (pos.y != null ? pos.y : 50) : 50;
-    if (isCms || x !== 50 || y !== 50) {
+    if (x !== 50 || y !== 50) {
       makeCropReady(media);
       media.style.animation = "none";
       var tx = (50 - x) * 0.3;
@@ -563,8 +566,12 @@
 
   function startCrop(container, section, posField, cx, cy) {
     var media = container.querySelector("img, video"); if (!media) return;
+    var wasCropReady = media.style.width === "130%";
     makeCropReady(media);
     media.style.animation = "none";
+    if (!wasCropReady) {
+      media.style.transform = "translate(0%, 0%)";
+    }
     var match = (media.style.transform || "").match(/translate\(\s*([-\d.]+)%\s*,\s*([-\d.]+)%/);
     var curTx = match ? parseFloat(match[1]) : 0;
     var curTy = match ? parseFloat(match[2]) : 0;
@@ -759,11 +766,9 @@
       '.cms-snap-label { position: absolute; bottom: 8px; right: 8px; padding: 3px 10px; font-size: 11px; font-family: monospace; color: var(--gold); background: rgba(0,0,0,.85); border-radius: 6px; border: 1px solid rgba(196,165,90,.25); }',
 
       '.cms-sec-bar {',
-      '  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);',
-      '  z-index: 90; display: flex; gap: 4px;',
-      '  opacity: 0; transition: opacity .2s;',
+      '  position: absolute; top: 10px; right: 10px;',
+      '  z-index: 95; display: flex; gap: 4px;',
       '}',
-      '[data-section]:hover > .cms-sec-bar { opacity: 1; }',
       '.cms-sec-btn {',
       '  display: flex; align-items: center; justify-content: center;',
       '  width: 28px; height: 28px; padding: 0;',
@@ -777,7 +782,9 @@
       '.cms-sec-btn:hover { background: rgba(196,165,90,.3); }',
 
       '.service-card { position: relative; }',
+      '.service-card:hover { transform: none !important; }',
       '.contact__cta { cursor: text; position: relative; display: inline-block; }',
+      '.contact__cta:hover { transform: none !important; }',
       '[data-anim].is-visible { transform: var(--cms-translate, none) !important; }',
 
       '@media (max-width: 680px) {',
