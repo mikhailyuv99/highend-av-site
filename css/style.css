@@ -118,6 +118,7 @@ main { position: relative; z-index: 1; }
 #hero-media {
   position: absolute;
   inset: 0;
+  overflow: hidden;
 }
 .hero__image {
   position: absolute;
@@ -125,12 +126,11 @@ main { position: relative; z-index: 1; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.06);
   animation: heroKen 18s ease-in-out infinite alternate;
 }
 @keyframes heroKen {
-  from { transform: scale(1.06) translate(0, 0); }
-  to   { transform: scale(1.12) translate(-1%, -1.5%); }
+  from { transform: scale(1.02) translate(0, 0); }
+  to   { transform: scale(1.06) translate(-1%, -1.5%); }
 }
 .hero__overlay {
   position: absolute;
@@ -219,6 +219,7 @@ main { position: relative; z-index: 1; }
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
 }
 .video-loop__media video {
   width: 100%;
@@ -294,6 +295,9 @@ main { position: relative; z-index: 1; }
     0 0 0 1px var(--line),
     0 40px 80px -20px rgba(0,0,0,.7);
 }
+#video-play-media {
+  overflow: hidden;
+}
 .video-play__glow {
   position: absolute;
   inset: -40%;
@@ -329,6 +333,11 @@ main { position: relative; z-index: 1; }
   border-radius: 14px;
   overflow: hidden;
   aspect-ratio: 4/5;
+}
+#about-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 .about__image,
 #about-media .about__image {
