@@ -38,7 +38,7 @@
       },
       "videoPlay": {
         "title": "Campagne «Horizon» — Maison Aeterna",
-        "video": "https://videos.pexels.com/video-files/4065924/4065924-uhd_2560_1440_24fps.mp4",
+        "video": "https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4",
         "poster": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1280&q=80&auto=format"
       },
       "about": {
@@ -62,10 +62,10 @@
       "about": {
         "title": "Équipement\n& savoir-faire",
         "text": "RED V-Raptor, Arri Mini LF, optiques Cooke et Zeiss, steadicam, drones, studio son Dolby Atmos, suite DaVinci Resolve — nos outils sont au service du geste artistique, jamais l'inverse.",
-        "image": "https://images.unsplash.com/photo-1616469829935-c2f33bbd89b8?w=960&q=80&auto=format"
+        "image": "https://images.pexels.com/photos/3062545/pexels-photo-3062545.jpeg?auto=compress&w=960"
       },
       "videoLoop": {
-        "video": "https://videos.pexels.com/video-files/6981411/6981411-uhd_2560_1440_25fps.mp4",
+        "video": "https://videos.pexels.com/video-files/2795173/2795173-uhd_2560_1440_25fps.mp4",
         "title": "\"L'excellence technique libère la vision créative.\""
       },
       "services": {
