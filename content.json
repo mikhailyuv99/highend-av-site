@@ -1,0 +1,136 @@
+{
+  "pageOrder": ["index", "work", "brand"],
+  "pages": {
+    "index": {
+      "sectionOrder": ["hero", "videoLoop", "videoPlay", "services", "contact"],
+      "hero": {
+        "title": "Cinematic Worlds For Visionary Brands",
+        "subtitle": "NOIR ATELIER conçoit des identités visuelles premium, des films de marque et des expériences immersives à l’échelle internationale.",
+        "image": "https://images.pexels.com/photos/3379943/pexels-photo-3379943.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1600&w=2600"
+      },
+      "videoLoop": {
+        "title": "Direction artistique. Production exécutive. Signature visuelle.",
+        "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      },
+      "videoPlay": {
+        "title": "Film manifeste — édition 2026",
+        "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        "poster": "https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1200&w=2000"
+      },
+      "services": {
+        "title": "Architecture créative haute couture",
+        "items": [
+          {
+            "title": "Brand Films",
+            "description": "Conception, écriture et réalisation de films iconiques destinés aux campagnes globales."
+          },
+          {
+            "title": "Visual Identity Systems",
+            "description": "Direction artistique complète : styleframe, motion grammar, color scripting, design toolkit."
+          },
+          {
+            "title": "Immersive Event Content",
+            "description": "Scénographies vidéo, mapping, écrans LED synchronisés et captation live premium."
+          },
+          {
+            "title": "Product Cinematics",
+            "description": "Lancements produit haute précision avec macro storytelling et CGI hybride."
+          },
+          {
+            "title": "Social Signature Packs",
+            "description": "Déclinaisons verticales, hooks narratifs, templates motion calibrés performance."
+          },
+          {
+            "title": "Executive Creative Partner",
+            "description": "Accompagnement long terme des équipes marketing, luxe et entertainment."
+          }
+        ]
+      },
+      "contact": {
+        "title": "Construisons votre prochain statement visuel",
+        "text": "Nous acceptons un nombre limité de collaborations par trimestre.",
+        "email": "studio@noir-atelier.com",
+        "buttonLabel": "Démarrer une consultation"
+      }
+    },
+    "work": {
+      "sectionOrder": ["hero", "about", "videoLoop", "services", "contact"],
+      "hero": {
+        "title": "Projects Built To Be Remembered",
+        "subtitle": "Une sélection de campagnes premium dans le luxe, la tech, l’automobile et le sport.",
+        "image": "https://images.pexels.com/photos/7661590/pexels-photo-7661590.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1600&w=2600"
+      },
+      "about": {
+        "title": "Notre méthode de production",
+        "text": "Chaque projet suit un pipeline rigoureux : insight stratégique, concept visuel, pré-production avancée, tournage optimisé, post-production color-managed et déploiement multi-format.",
+        "image": "https://images.pexels.com/photos/2510428/pexels-photo-2510428.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1200&w=1800"
+      },
+      "videoLoop": {
+        "title": "Des images qui augmentent la valeur perçue de votre marque.",
+        "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+      },
+      "services": {
+        "title": "Formats & livrables",
+        "items": [
+          { "title": "Hero Film", "description": "Master 4K, versions TVC, digital cuts, subtitles et localization pack." },
+          { "title": "Launch Suite", "description": "Teasers, reveal, behind-the-scenes, keynote visuals et social snippets." },
+          { "title": "Post Premium", "description": "Color science, VFX compositing, sound design spatial et mastering." }
+        ]
+      },
+      "contact": {
+        "title": "Recevoir nos case studies complets",
+        "text": "Demandez l’accès à notre portfolio privé.",
+        "email": "portfolio@noir-atelier.com",
+        "buttonLabel": "Obtenir le dossier"
+      }
+    },
+    "brand": {
+      "sectionOrder": ["hero", "videoPlay", "about", "services", "contact"],
+      "hero": {
+        "title": "Brand Studio For Ambitious Companies",
+        "subtitle": "Nous orchestrons branding, motion design et storytelling pour créer des univers cohérents et désirables.",
+        "image": "https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1600&w=2600"
+      },
+      "videoPlay": {
+        "title": "Masterclass: Building premium perception",
+        "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        "poster": "https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1200&w=2000"
+      },
+      "about": {
+        "title": "Gouvernance de marque",
+        "text": "Nous créons des standards de marque actionnables pour les équipes design, contenu et acquisition : direction visuelle, framework motion, tonalité éditoriale et templates d’exécution.",
+        "image": "https://images.pexels.com/photos/3184357/pexels-photo-3184357.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=1200&w=1800"
+      },
+      "services": {
+        "title": "Modules brand studio",
+        "items": [
+          { "title": "Brand Strategy", "description": "Positionnement, proposition de valeur, architecture narrative." },
+          { "title": "Visual System", "description": "Typographie, iconographie, guidelines et kits de production." },
+          { "title": "Motion Language", "description": "Transitions, rythmes, courbes d’animation et templates dynamiques." },
+          { "title": "Campaign OS", "description": "Système de campagne modulaire pour accélérer les lancements." }
+        ]
+      },
+      "contact": {
+        "title": "Parlons de votre rebranding",
+        "text": "Audit express offert pour les marques B2B/B2C en phase de scale.",
+        "email": "brand@noir-atelier.com",
+        "buttonLabel": "Réserver un audit"
+      }
+    }
+  },
+  "theme": {
+    "heroTitle": "#f7f9ff",
+    "heroSubtitle": "#d3dcf7",
+    "aboutTitle": "#e9eeff",
+    "aboutText": "#9fb0cf",
+    "servicesBg": "#0e1420",
+    "servicesTitle": "#edf2ff",
+    "serviceCardBg": "rgba(255,255,255,0.02)",
+    "serviceCardTitle": "#f1f4ff",
+    "serviceCardText": "#a5b6d6",
+    "contactTitle": "#eff3ff",
+    "contactText": "#adbcda",
+    "contactButtonBg": "#d9b24d",
+    "contactButtonText": "#17120a"
+  }
+}
