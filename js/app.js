@@ -67,9 +67,11 @@
     if (!el || !pos) return;
     if (typeof el === "string") el = document.querySelector(el);
     if (!el) return;
-    var t = "translate(" + (pos.x || 0) + "px, " + (pos.y || 0) + "px)";
+    var x = pos.x || 0, y = pos.y || 0;
+    if (x === 0 && y === 0) return;
+    var t = "translate(" + x + "px, " + y + "px)";
     el.style.setProperty("--cms-translate", t);
-    if (!el.hasAttribute("data-anim")) el.style.transform = t;
+    el.style.transform = t;
   }
 
   function applyCrop(media, pos) {
@@ -114,6 +116,7 @@
     if (d.services) renderServices(d.services);
     if (d.contact) renderContact(d.contact);
     if (d.sectionOrder) applySectionOrder(d.sectionOrder);
+    if (d.sectionSizes) applySectionSizes(d.sectionSizes);
     requestAnimationFrame(observeAnims);
   }
 
@@ -138,6 +141,7 @@
     var lbl = document.querySelector(".video-play__label"); if (lbl) lbl.textContent = d.label || "Showreel";
     var c = document.getElementById("video-play-media");
     if (c) { var glow = c.querySelector(".video-play__glow"); c.innerHTML = ""; if (glow) c.appendChild(glow); if (d.video) { var v = document.createElement("video"); v.src = resolveUrl(d.video); v.controls = true; v.playsInline = true; v.preload = "auto"; v.setAttribute("playsinline", ""); if (d.poster) v.poster = resolveUrl(d.poster); applyCrop(v, d.videoPosition); c.appendChild(v); } }
+    applyPos("#video-play-media", d.mediaPosition);
     applyPos("#video-play-title", d.titlePosition); applyPos(".video-play__label", d.labelPosition);
     applySize(document.getElementById("video-play-title"), d.titleSize); applySize(document.querySelector(".video-play__label"), d.labelSize);
   }
@@ -151,6 +155,16 @@
     applySize(document.getElementById("about-title"), d.titleSize); applySize(document.getElementById("about-text"), d.textSize); applySize(document.querySelector(".about__eyebrow"), d.eyebrowSize);
   }
 
+  function applyCardTransform(card, pos, size) {
+    var px = pos ? (pos.x || 0) : 0, py = pos ? (pos.y || 0) : 0;
+    var sz = size || 1;
+    var t = "";
+    if (px || py) t += "translate(" + px + "px, " + py + "px) ";
+    if (sz !== 1) t += "scale(" + sz + ")";
+    t = t.trim();
+    if (t) { card.style.transform = t; card.style.setProperty("--cms-translate", t); }
+  }
+
   function renderServices(d) {
     show("services"); setTxt("services-title", d.title);
     var ey = document.querySelector(".services__eyebrow"); if (ey) ey.textContent = d.eyebrow || "Expertise";
@@ -159,9 +173,8 @@
     d.items.forEach(function (item) {
       var card = document.createElement("div"); card.className = "service-card";
       card.innerHTML = '<h3 class="service-card__title">' + esc(item.title) + '</h3><p class="service-card__description">' + esc(item.description) + '</p>';
-      if (item.position) applyPos(card, item.position);
       list.appendChild(card);
-      applySize(card, item.size);
+      applyCardTransform(card, item.position, item.size);
     });
     applyPos("#services-title", d.titlePosition); applyPos(".services__eyebrow", d.eyebrowPosition);
     applySize(document.getElementById("services-title"), d.titleSize); applySize(document.querySelector(".services__eyebrow"), d.eyebrowSize);
@@ -182,6 +195,14 @@
       var sec = document.querySelector('[data-section="' + order[i] + '"]');
       if (sec) main.insertBefore(sec, main.querySelector("[data-section]"));
     }
+  }
+
+  function applySectionSizes(sizes) {
+    if (!sizes) return;
+    Object.keys(sizes).forEach(function (name) {
+      var sec = document.querySelector('[data-section="' + name + '"]');
+      if (sec && sizes[name]) sec.style.paddingBottom = sizes[name] + "rem";
+    });
   }
 
   var obs = null;
