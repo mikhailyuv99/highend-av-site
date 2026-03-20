@@ -1,383 +1,399 @@
+/* ============================================================
+   OBSCURA — CMS-Compatible Client-Side App
+   Full postMessage protocol: CMS_READY, CMS_CONTENT,
+   CMS_PATCH, CMS_PAGE, CMS_UPLOAD_REQUEST
+   ============================================================ */
+
 (function () {
-  var contentPath = 'content.json';
-  var cmsEmbed = /[?&]cmsEmbed=1(?:&|$)/.test(window.location.search);
-  var embedIsMultiPage = false;
-  var embedActivePageSlug = '';
-  var parentOriginRuntime = null;
-  var wiredHash = false;
-  var wiredMediaClicks = false;
-  var sectionIds = ['hero', 'videoLoop', 'videoPlay', 'about', 'services', 'contact'];
-  var mainEl = document.querySelector('main');
-  var sectionEls = {};
-  sectionIds.forEach(function (id) { sectionEls[id] = document.getElementById(id); });
+  "use strict";
 
-  function escapeHtml(s) {
-    var d = document.createElement('div');
-    d.textContent = s == null ? '' : String(s);
-    return d.innerHTML;
+  /* --------------------------------------------------------
+     ENV / HELPERS
+     -------------------------------------------------------- */
+  const params = new URLSearchParams(window.location.search);
+  const isCmsEmbed = params.get("cmsEmbed") === "1";
+  const parentOriginParam = params.get("parentOrigin") || null;
+  const ORIGIN = window.location.origin;
+  let cmsParentOrigin = parentOriginParam;
+
+  function resolveUrl(raw) {
+    if (!raw) return "";
+    if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+    try { return new URL(raw, ORIGIN + "/").href; } catch (_) { return raw; }
   }
-  function getTrustedCmsOrigin() {
+
+  function normalizeOrigin(o) {
     try {
-      var m = window.location.search.match(/[?&]parentOrigin=([^&]+)/);
-      if (m) return decodeURIComponent(m[1]);
-    } catch (e1) {}
-    try {
-      if (document.referrer) return new URL(document.referrer).origin;
-    } catch (e2) {}
-    return null;
+      const u = new URL(o);
+      const host = u.hostname === "127.0.0.1" ? "localhost" : u.hostname;
+      return u.protocol + "//" + host + (u.port ? ":" + u.port : "");
+    } catch (_) { return o; }
   }
-  function normLocalHost(h) { return (h === '127.0.0.1' || h === '[::1]') ? 'localhost' : h; }
-  function originAllowed(actual, expected) {
-    if (!expected || actual === expected) return true;
-    try {
-      var a = new URL(actual);
-      var b = new URL(expected);
-      return a.protocol === b.protocol && a.port === b.port && normLocalHost(a.hostname) === normLocalHost(b.hostname);
-    } catch (e) { return false; }
+
+  function isAllowedOrigin(incoming) {
+    if (!cmsParentOrigin) return true;
+    return normalizeOrigin(incoming) === normalizeOrigin(cmsParentOrigin);
   }
-  function postToParent(payload) {
-    var target = parentOriginRuntime || getTrustedCmsOrigin() || '*';
-    window.parent.postMessage(payload, target);
-  }
-  function resolveMediaUrl(raw) {
-    if (raw == null) return '';
-    var s = String(raw).trim();
-    if (!s) return '';
-    if (/^(https?:|data:|blob:)/i.test(s)) return s;
-    if (s.indexOf('//') === 0) {
-      try { return new URL('https:' + s).href; } catch (e0) {}
-    }
-    try {
-      var root = window.location.origin;
-      var p = s.indexOf('/') === 0 ? s : '/' + s.replace(/^\.\//, '');
-      return root + p;
-    } catch (e1) {
-      return s;
-    }
-  }
-  function uniq(arr) {
-    var out = [];
-    var seen = {};
-    arr.forEach(function (v) { if (v && !seen[v]) { seen[v] = true; out.push(v); } });
-    return out;
-  }
-  function mediaCandidates(raw) {
-    if (raw == null) return [];
-    var s = String(raw).trim();
-    if (!s) return [];
-    var c = [s];
-    try { c.push(new URL(s, window.location.href).href); } catch (e0) {}
-    try { c.push(new URL(s, window.location.origin + '/').href); } catch (e1) {}
-    c.push(resolveMediaUrl(s));
-    return uniq(c);
-  }
-  function bindMediaFallback(root) {
-    if (!root) return;
-    var nodes = root.querySelectorAll('img[data-cms-candidates],video[data-cms-candidates]');
-    nodes.forEach(function (el) {
-      if (el.getAttribute('data-cms-bound') === '1') return;
-      el.setAttribute('data-cms-bound', '1');
-      var list = [];
-      try { list = JSON.parse(el.getAttribute('data-cms-candidates') || '[]'); } catch (e) {}
-      if (!Array.isArray(list) || !list.length) return;
-      var i = 0;
-      function apply(idx) {
-        if (idx >= list.length) return;
-        var src = list[idx];
-        if (!src) return;
-        if (el.tagName === 'VIDEO') { el.src = src; try { el.load(); } catch (e1) {} }
-        else el.src = src;
-      }
-      el.addEventListener('error', function () { i += 1; apply(i); });
-      apply(0);
-    });
-  }
-  function setText(id, value) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = value || '';
-  }
-  function applyTheme(theme) {
-    if (!theme) return;
-    var t = theme;
-    var el;
-    if (el = document.getElementById('hero-title')) el.style.color = t.heroTitle || '';
-    if (el = document.getElementById('hero-subtitle')) el.style.color = t.heroSubtitle || '';
-    if (el = document.getElementById('about-title')) el.style.color = t.aboutTitle || '';
-    if (el = document.getElementById('about-text')) el.style.color = t.aboutText || '';
-    if (el = document.getElementById('services-title')) el.style.color = t.servicesTitle || '';
-    if (el = document.getElementById('contact-title')) el.style.color = t.contactTitle || '';
-    if (el = document.getElementById('contact-text')) el.style.color = t.contactText || '';
-    if (el = document.getElementById('contact-email')) el.style.color = t.contactText || '';
-    if (el = document.getElementById('contact-cta')) {
-      if (t.contactButtonBg) el.style.background = t.contactButtonBg;
-      if (t.contactButtonText) el.style.color = t.contactButtonText;
-    }
-  }
-  function clearPage() {
-    ['hero-title','hero-subtitle','about-title','about-text','services-title','contact-title','contact-text','contact-email','video-loop-title','video-play-title'].forEach(function (id) {
-      setText(id, '');
-    });
-    ['hero-media','about-media','services-list','video-loop-media','video-play-media'].forEach(function (id) {
-      var n = document.getElementById(id);
-      if (n) n.innerHTML = '';
-    });
-    var cta = document.getElementById('contact-cta');
-    if (cta) { cta.textContent = ''; cta.href = '#'; }
-  }
-  function renderHero(page) {
-    if (!page.hero) return;
-    setText('hero-title', page.hero.title || '');
-    setText('hero-subtitle', page.hero.subtitle || '');
-    var box = document.getElementById('hero-media');
-    if (!box) return;
-    if (page.hero.video) {
-      var vids = mediaCandidates(page.hero.video);
-      var poster = resolveMediaUrl(page.hero.image || '');
-      box.innerHTML = '<video class="hero__image" muted loop playsinline autoplay preload="auto" poster="' + escapeHtml(poster) + '" data-cms-candidates="' + escapeHtml(JSON.stringify(vids)) + '"></video>';
-    } else {
-      var imgs = uniq(mediaCandidates(page.hero.imageAvif || '').concat(mediaCandidates(page.hero.imageWebp || '')).concat(mediaCandidates(page.hero.image || '')));
-      box.innerHTML = '<img class="hero__image" alt="" loading="eager" fetchpriority="high" data-cms-candidates="' + escapeHtml(JSON.stringify(imgs)) + '">';
-    }
-    bindMediaFallback(box);
-  }
-  function renderAbout(page) {
-    if (!page.about) return;
-    setText('about-title', page.about.title || '');
-    setText('about-text', page.about.text || '');
-    var box = document.getElementById('about-media');
-    if (!box) return;
-    if (page.about.video) {
-      var vids = mediaCandidates(page.about.video);
-      var poster = resolveMediaUrl(page.about.image || '');
-      box.innerHTML = '<video class="about__image" muted loop playsinline controls preload="auto" poster="' + escapeHtml(poster) + '" data-cms-candidates="' + escapeHtml(JSON.stringify(vids)) + '"></video>';
-    } else {
-      var imgs = uniq(mediaCandidates(page.about.imageAvif || '').concat(mediaCandidates(page.about.imageWebp || '')).concat(mediaCandidates(page.about.image || '')));
-      box.innerHTML = '<img class="about__image" alt="" data-cms-candidates="' + escapeHtml(JSON.stringify(imgs)) + '">';
-    }
-    bindMediaFallback(box);
-  }
-  function renderServices(page) {
-    if (!page.services) return;
-    setText('services-title', page.services.title || '');
-    var list = document.getElementById('services-list');
-    if (!list || !Array.isArray(page.services.items)) return;
-    list.innerHTML = page.services.items.map(function (item) {
-      return '<div class="service-card"><h3 class="service-card__title">' + escapeHtml(item.title || '') + '</h3><p class="service-card__description">' + escapeHtml(item.description || '') + '</p></div>';
-    }).join('');
-  }
-  function renderContact(page) {
-    if (!page.contact) return;
-    setText('contact-title', page.contact.title || '');
-    setText('contact-text', page.contact.text || '');
-    setText('contact-email', page.contact.email || '');
-    var cta = document.getElementById('contact-cta');
-    if (cta) {
-      cta.textContent = page.contact.buttonLabel || 'Contact';
-      cta.href = page.contact.email ? 'mailto:' + page.contact.email : '#';
-    }
-  }
-  function renderVideoLoop(page) {
-    if (!page.videoLoop) return;
-    setText('video-loop-title', page.videoLoop.title || '');
-    var box = document.getElementById('video-loop-media');
-    if (!box) return;
-    if (!page.videoLoop.video) return;
-    var vids = mediaCandidates(page.videoLoop.video);
-    box.innerHTML = '<video muted loop playsinline autoplay preload="auto" data-cms-candidates="' + escapeHtml(JSON.stringify(vids)) + '"></video>';
-    bindMediaFallback(box);
-  }
-  function renderVideoPlay(page) {
-    if (!page.videoPlay) return;
-    setText('video-play-title', page.videoPlay.title || '');
-    var box = document.getElementById('video-play-media');
-    if (!box) return;
-    if (!page.videoPlay.video) return;
-    var vids = mediaCandidates(page.videoPlay.video);
-    var poster = page.videoPlay.poster ? ' poster="' + escapeHtml(resolveMediaUrl(page.videoPlay.poster)) + '"' : '';
-    box.innerHTML = '<video controls playsinline preload="auto"' + poster + ' data-cms-candidates="' + escapeHtml(JSON.stringify(vids)) + '"></video>';
-    bindMediaFallback(box);
-  }
-  function ensureAllInDom() {
-    sectionIds.forEach(function (id) {
-      var el = sectionEls[id];
-      if (el && el.parentNode !== mainEl) mainEl.appendChild(el);
-    });
-  }
-  function renderPage(page, theme) {
-    if (!page) return;
-    ensureAllInDom();
-    clearPage();
-    renderHero(page);
-    renderAbout(page);
-    renderServices(page);
-    renderContact(page);
-    renderVideoLoop(page);
-    renderVideoPlay(page);
-    applyTheme(theme);
-    var order = page.sectionOrder && page.sectionOrder.length ? page.sectionOrder : ['hero','about','services','contact'];
-    order = order.filter(function (id) { return page[id] != null; });
-    sectionIds.forEach(function (id) {
-      var el = sectionEls[id];
-      if (!el) return;
-      if (order.indexOf(id) === -1) el.style.display = 'none';
-      else { el.style.display = ''; mainEl.appendChild(el); }
+
+  /* --------------------------------------------------------
+     STATE
+     -------------------------------------------------------- */
+  let content = null;
+  let currentPageSlug = params.get("page") || "index";
+  const allSections = ["hero", "videoLoop", "videoPlay", "about", "services", "contact"];
+
+  /* --------------------------------------------------------
+     NAVIGATION (multi-page hash)
+     -------------------------------------------------------- */
+  const navEl = document.getElementById("site-nav");
+
+  function activateNav() {
+    if (!content || !content.pages) return;
+    navEl && (navEl.hidden = false);
+    document.querySelectorAll(".site-nav__link").forEach(function (a) {
+      a.classList.toggle("active", a.dataset.page === currentPageSlug);
     });
   }
 
-  function markMediaZones() {
-    ['hero-media-zone', 'about-media-zone', 'video-loop-media', 'video-play-media'].forEach(function (id) {
-      var n = document.getElementById(id);
-      if (n) n.setAttribute('data-cms-media', id);
-    });
-  }
-  function resolveUploadKey(zone, ev) {
-    var id = zone.getAttribute('data-cms-media');
-    if (id === 'hero-media-zone') return zone.querySelector('#hero-media video') ? 'hero-video' : 'hero';
-    if (id === 'about-media-zone') return zone.querySelector('#about-media video') ? 'about-video' : 'about';
-    if (id === 'video-loop-media') return 'videoLoop-video';
-    if (id === 'video-play-media') return ev.altKey ? 'videoPlay-poster' : 'videoPlay-video';
-    return null;
-  }
-  function wireMediaClicks() {
-    if (!cmsEmbed || wiredMediaClicks) return;
-    wiredMediaClicks = true;
-    markMediaZones();
-    document.addEventListener('click', function (ev) {
-      var zone = ev.target.closest && ev.target.closest('[data-cms-media]');
-      if (!zone) return;
-      var video = ev.target.closest && ev.target.closest('video');
-      if (video && zone.contains(video) && !ev.shiftKey) return;
-      ev.preventDefault();
-      ev.stopPropagation();
-      var key = resolveUploadKey(zone, ev);
-      if (key) postToParent({ source: 'cms-site', type: 'CMS_UPLOAD_REQUEST', uploadKey: key });
-    }, true);
-  }
-  function wireText(el, patchBuilder) {
-    if (!el || el.getAttribute('data-cms-wired') === '1') return;
-    el.setAttribute('data-cms-wired', '1');
-    el.setAttribute('contenteditable', 'true');
-    el.setAttribute('data-cms-inline', 'true');
-    var t;
-    function flush() {
-      clearTimeout(t);
-      var patch = patchBuilder();
-      if (patch) postToParent({ source: 'cms-site', type: 'CMS_PATCH', pageSlug: embedIsMultiPage ? (embedActivePageSlug || 'index') : undefined, patch: patch });
-    }
-    el.addEventListener('input', function () { clearTimeout(t); t = setTimeout(flush, 350); });
-    el.addEventListener('blur', flush);
-    if (el.tagName === 'A') el.addEventListener('click', function (ev) { if (cmsEmbed) ev.preventDefault(); });
-  }
-  function wireInlineEditing() {
-    if (!cmsEmbed) return;
-    wireMediaClicks();
-    wireText(document.getElementById('hero-title'), function () { return { hero: { title: document.getElementById('hero-title').textContent || '' } }; });
-    wireText(document.getElementById('hero-subtitle'), function () { return { hero: { subtitle: document.getElementById('hero-subtitle').textContent || '' } }; });
-    wireText(document.getElementById('about-title'), function () { return { about: { title: document.getElementById('about-title').textContent || '' } }; });
-    wireText(document.getElementById('about-text'), function () { return { about: { text: document.getElementById('about-text').textContent || '' } }; });
-    wireText(document.getElementById('services-title'), function () {
-      var cards = document.querySelectorAll('#services-list .service-card');
-      var items = [];
-      cards.forEach(function (card) {
-        items.push({
-          title: (card.querySelector('.service-card__title') || {}).textContent || '',
-          description: (card.querySelector('.service-card__description') || {}).textContent || ''
-        });
-      });
-      return { services: { title: document.getElementById('services-title').textContent || '', items: items } };
-    });
-    document.querySelectorAll('#services-list .service-card__title, #services-list .service-card__description').forEach(function (el) {
-      wireText(el, function () {
-        var cards = document.querySelectorAll('#services-list .service-card');
-        var items = [];
-        cards.forEach(function (card) {
-          items.push({
-            title: (card.querySelector('.service-card__title') || {}).textContent || '',
-            description: (card.querySelector('.service-card__description') || {}).textContent || ''
-          });
-        });
-        return { services: { title: (document.getElementById('services-title') || {}).textContent || '', items: items } };
-      });
-    });
-    wireText(document.getElementById('video-loop-title'), function () { return { videoLoop: { title: document.getElementById('video-loop-title').textContent || '' } }; });
-    wireText(document.getElementById('video-play-title'), function () { return { videoPlay: { title: document.getElementById('video-play-title').textContent || '' } }; });
-    wireText(document.getElementById('contact-title'), function () { return { contact: { title: document.getElementById('contact-title').textContent || '' } }; });
-    wireText(document.getElementById('contact-text'), function () { return { contact: { text: document.getElementById('contact-text').textContent || '' } }; });
-    wireText(document.getElementById('contact-email'), function () {
-      var email = (document.getElementById('contact-email').textContent || '').trim();
-      var cta = document.getElementById('contact-cta');
-      if (cta) cta.href = email ? 'mailto:' + email : '#';
-      return { contact: { email: email } };
-    });
-    wireText(document.getElementById('contact-cta'), function () { return { contact: { buttonLabel: document.getElementById('contact-cta').textContent || '' } }; });
-  }
-  function renderContent(data, opts) {
-    opts = opts || {};
-    if (!data) return;
-    var nav = document.getElementById('site-nav');
-    var isMulti = data.pages && typeof data.pages === 'object' && Object.keys(data.pages).length > 0;
-    embedIsMultiPage = isMulti;
-    if (isMulti) {
-      if (nav) nav.removeAttribute('hidden');
-      var order = data.pageOrder && data.pageOrder.length ? data.pageOrder : Object.keys(data.pages);
-      var getSlug = function () {
-        var h = (window.location.hash || '').replace(/^#/, '') || order[0] || 'index';
-        return order.indexOf(h) >= 0 ? h : (order[0] || 'index');
-      };
-      var showPage = function (slugOverride) {
-        var slug = slugOverride || getSlug();
-        if (order.indexOf(slug) < 0) slug = order[0] || 'index';
-        embedActivePageSlug = slug;
-        renderPage(data.pages[slug], data.theme);
-        if (nav) [].forEach.call(nav.querySelectorAll('.site-nav__link'), function (l) { l.classList.toggle('active', l.getAttribute('data-page') === slug); });
-        if (cmsEmbed && slugOverride) {
-          try { if (window.location.hash !== '#' + slug) history.replaceState(null, '', '#' + slug); } catch (e) {}
-        }
-      };
-      showPage(opts.pageSlug);
-      if (!wiredHash) {
-        wiredHash = true;
-        window.addEventListener('hashchange', function () {
-          showPage();
-          wireInlineEditing();
-          if (cmsEmbed) postToParent({ source: 'cms-site', type: 'CMS_PAGE', slug: getSlug() });
-        });
+  if (navEl) {
+    navEl.addEventListener("click", function (e) {
+      var link = e.target.closest(".site-nav__link");
+      if (!link) return;
+      e.preventDefault();
+      var slug = link.dataset.page;
+      if (slug && slug !== currentPageSlug) {
+        currentPageSlug = slug;
+        renderPage(getPageData(slug));
+        activateNav();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        postToParent({ type: "CMS_PAGE", source: "cms-site", slug: slug });
       }
-      wireInlineEditing();
-      return;
-    }
-    if (nav) nav.setAttribute('hidden', '');
-    renderPage(data, data.theme);
-    wireInlineEditing();
+    });
   }
 
-  if (cmsEmbed) {
-    parentOriginRuntime = getTrustedCmsOrigin();
-    postToParent({ source: 'cms-site', type: 'CMS_READY' });
-    window.addEventListener('message', function (e) {
-      if (e.source !== window.parent) return;
-      var expected = parentOriginRuntime || getTrustedCmsOrigin();
-      if (expected && !originAllowed(e.origin, expected)) return;
-      if (!e.data || e.data.source !== 'cms-app' || e.data.type !== 'CMS_CONTENT') return;
-      parentOriginRuntime = e.origin;
-      try {
-        renderContent(e.data.content, { pageSlug: e.data.pageSlug || undefined });
-        postToParent({ source: 'cms-site', type: 'CMS_APPLIED' });
-      } catch (err) {
-        console.error('CMS embed apply failed:', err);
+  window.addEventListener("hashchange", function () {
+    var slug = window.location.hash.replace("#", "") || "index";
+    if (content && content.pages && content.pages[slug] && slug !== currentPageSlug) {
+      currentPageSlug = slug;
+      renderPage(getPageData(slug));
+      activateNav();
+      postToParent({ type: "CMS_PAGE", source: "cms-site", slug: slug });
+    }
+  });
+
+  /* --------------------------------------------------------
+     POST TO PARENT
+     -------------------------------------------------------- */
+  function postToParent(msg) {
+    if (!isCmsEmbed) return;
+    var target = cmsParentOrigin || "*";
+    try { window.parent.postMessage(msg, target); } catch (_) {
+      try { window.parent.postMessage(msg, "*"); } catch (__) { /* noop */ }
+    }
+  }
+
+  /* --------------------------------------------------------
+     CMS EMBED — Listen for CMS_CONTENT
+     -------------------------------------------------------- */
+  if (isCmsEmbed) {
+    window.addEventListener("message", function (e) {
+      if (!e.data || e.data.source !== "cms-app") return;
+      if (!cmsParentOrigin) cmsParentOrigin = e.origin;
+      if (!isAllowedOrigin(e.origin)) return;
+
+      if (e.data.type === "CMS_CONTENT" && e.data.content) {
+        content = e.data.content;
+        if (e.data.pageSlug) currentPageSlug = e.data.pageSlug;
+        renderPage(getPageData(currentPageSlug));
+        activateNav();
       }
     });
-  } else {
-    fetch(contentPath)
-      .then(function (r) {
-        if (!r.ok) throw new Error('content.json not found');
-        return r.json();
+    postToParent({ type: "CMS_READY", source: "cms-site" });
+  }
+
+  /* --------------------------------------------------------
+     LOAD CONTENT.JSON (standalone)
+     -------------------------------------------------------- */
+  if (!isCmsEmbed) {
+    fetch("content.json?_=" + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        content = data;
+        var hash = window.location.hash.replace("#", "");
+        if (hash && content.pages && content.pages[hash]) currentPageSlug = hash;
+        renderPage(getPageData(currentPageSlug));
+        activateNav();
       })
-      .then(function (data) { renderContent(data); })
-      .catch(function (err) {
-        console.error('Failed to load content:', err);
-        setText('hero-title', 'Contenu non chargé');
-        setText('hero-subtitle', 'Vérifiez que content.json existe.');
-      });
+      .catch(function (err) { console.error("[OBSCURA] content.json load error", err); });
   }
+
+  /* --------------------------------------------------------
+     GET PAGE DATA
+     -------------------------------------------------------- */
+  function getPageData(slug) {
+    if (!content) return {};
+    if (content.pages) return content.pages[slug] || {};
+    return content;
+  }
+
+  /* --------------------------------------------------------
+     CLEAR ALL SECTIONS
+     -------------------------------------------------------- */
+  function clearSections() {
+    var ids = [
+      "hero-title", "hero-subtitle", "hero-media",
+      "video-loop-title", "video-loop-media",
+      "video-play-title", "video-play-media",
+      "about-title", "about-text", "about-media",
+      "services-title", "services-list",
+      "contact-title", "contact-text", "contact-email", "contact-cta"
+    ];
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (id === "video-play-media") {
+        var glow = el.querySelector(".video-play__glow");
+        el.innerHTML = "";
+        if (glow) el.appendChild(glow);
+      } else {
+        el.textContent = "";
+      }
+    });
+    allSections.forEach(function (s) {
+      var sec = document.querySelector('[data-section="' + s + '"]');
+      if (sec) sec.style.display = "none";
+    });
+  }
+
+  /* --------------------------------------------------------
+     RENDER PAGE
+     -------------------------------------------------------- */
+  function renderPage(data) {
+    clearSections();
+    if (!data) return;
+
+    if (data.hero) renderHero(data.hero);
+    if (data.videoLoop) renderVideoLoop(data.videoLoop);
+    if (data.videoPlay) renderVideoPlay(data.videoPlay);
+    if (data.about) renderAbout(data.about);
+    if (data.services) renderServices(data.services);
+    if (data.contact) renderContact(data.contact);
+
+    requestAnimationFrame(observeAnimations);
+  }
+
+  /* --------------------------------------------------------
+     RENDER FUNCTIONS
+     -------------------------------------------------------- */
+
+  function show(section) {
+    var el = document.querySelector('[data-section="' + section + '"]');
+    if (el) el.style.display = "";
+  }
+
+  /* HERO */
+  function renderHero(d) {
+    show("hero");
+    setText("hero-title", d.title);
+    setText("hero-subtitle", d.subtitle);
+    var container = document.getElementById("hero-media");
+    if (!container) return;
+    container.innerHTML = "";
+    if (d.image) {
+      var img = document.createElement("img");
+      img.className = "hero__image";
+      img.src = resolveUrl(d.image);
+      img.alt = "OBSCURA hero";
+      img.loading = "eager";
+      container.appendChild(img);
+    }
+    markMedia("hero-media-zone", "hero");
+  }
+
+  /* VIDEO LOOP */
+  function renderVideoLoop(d) {
+    show("videoLoop");
+    setText("video-loop-title", d.title);
+    var container = document.getElementById("video-loop-media");
+    if (!container) return;
+    container.innerHTML = "";
+    if (d.video) {
+      var v = document.createElement("video");
+      v.src = resolveUrl(d.video);
+      v.autoplay = true;
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.preload = "auto";
+      v.setAttribute("playsinline", "");
+      container.appendChild(v);
+      v.play().catch(function () {});
+    }
+    markMedia("video-loop-media", "videoLoop-video");
+  }
+
+  /* VIDEO PLAY */
+  function renderVideoPlay(d) {
+    show("videoPlay");
+    setText("video-play-title", d.title);
+    var container = document.getElementById("video-play-media");
+    if (!container) return;
+    var glow = container.querySelector(".video-play__glow");
+    container.innerHTML = "";
+    if (glow) container.appendChild(glow);
+    if (d.video) {
+      var v = document.createElement("video");
+      v.src = resolveUrl(d.video);
+      v.controls = true;
+      v.playsInline = true;
+      v.preload = "auto";
+      v.setAttribute("playsinline", "");
+      if (d.poster) v.poster = resolveUrl(d.poster);
+      container.appendChild(v);
+    }
+    markMedia("video-play-media", "videoPlay-video");
+  }
+
+  /* ABOUT */
+  function renderAbout(d) {
+    show("about");
+    setText("about-title", d.title);
+    setText("about-text", d.text);
+    var container = document.getElementById("about-media");
+    if (!container) return;
+    container.innerHTML = "";
+    if (d.image) {
+      var img = document.createElement("img");
+      img.className = "about__image";
+      img.src = resolveUrl(d.image);
+      img.alt = "About OBSCURA";
+      container.appendChild(img);
+    }
+    markMedia("about-media-zone", "about");
+  }
+
+  /* SERVICES */
+  function renderServices(d) {
+    show("services");
+    setText("services-title", d.title);
+    var list = document.getElementById("services-list");
+    if (!list || !d.items) return;
+    list.innerHTML = "";
+    d.items.forEach(function (item) {
+      var card = document.createElement("div");
+      card.className = "service-card";
+      card.innerHTML =
+        '<h3 class="service-card__title">' + esc(item.title) + "</h3>" +
+        '<p class="service-card__description">' + esc(item.description) + "</p>";
+      list.appendChild(card);
+    });
+  }
+
+  /* CONTACT */
+  function renderContact(d) {
+    show("contact");
+    setText("contact-title", d.title);
+    setText("contact-text", d.text);
+    var emailEl = document.getElementById("contact-email");
+    if (emailEl) emailEl.textContent = d.email || "";
+    var cta = document.getElementById("contact-cta");
+    if (cta) {
+      cta.textContent = d.cta || "";
+      cta.href = d.email ? "mailto:" + d.email : "#";
+    }
+  }
+
+  /* --------------------------------------------------------
+     TEXT HELPERS / INLINE EDITING
+     -------------------------------------------------------- */
+  function setText(id, val) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val || "";
+  }
+  function esc(s) { var d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+
+  function wireText(id, sectionKey, field) {
+    var el = document.getElementById(id);
+    if (!el || el.dataset.cmsWired) return;
+    el.contentEditable = "true";
+    el.dataset.cmsInline = "true";
+    el.dataset.cmsWired = "true";
+    el.spellcheck = false;
+
+    var timer = null;
+    function emitPatch() {
+      var patch = {};
+      patch[sectionKey] = {};
+      patch[sectionKey][field] = el.textContent;
+      postToParent({ type: "CMS_PATCH", source: "cms-site", pageSlug: currentPageSlug, patch: patch });
+    }
+    el.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(emitPatch, 400); });
+    el.addEventListener("blur", function () { clearTimeout(timer); emitPatch(); });
+  }
+
+  /* --------------------------------------------------------
+     MEDIA CLICK → CMS_UPLOAD_REQUEST
+     -------------------------------------------------------- */
+  function markMedia(id, uploadKey) {
+    if (!isCmsEmbed) return;
+    var zone = document.getElementById(id);
+    if (!zone || zone.dataset.cmsMediaWired) return;
+    zone.dataset.cmsMedia = "true";
+    zone.dataset.cmsMediaWired = "true";
+    zone.style.cursor = "pointer";
+
+    zone.addEventListener("click", function (e) {
+      var isVideo = e.target.tagName === "VIDEO";
+      if (isVideo && !e.shiftKey) return;
+      e.preventDefault();
+
+      var key = uploadKey;
+      if (e.altKey && e.shiftKey && uploadKey === "videoPlay-video") key = "videoPlay-poster";
+      postToParent({ type: "CMS_UPLOAD_REQUEST", source: "cms-site", uploadKey: key });
+    });
+  }
+
+  /* --------------------------------------------------------
+     WIRE ALL INLINE EDITORS (after each render)
+     -------------------------------------------------------- */
+  function wireAllEditors() {
+    if (!isCmsEmbed) return;
+    wireText("hero-title", "hero", "title");
+    wireText("hero-subtitle", "hero", "subtitle");
+    wireText("video-loop-title", "videoLoop", "title");
+    wireText("video-play-title", "videoPlay", "title");
+    wireText("about-title", "about", "title");
+    wireText("about-text", "about", "text");
+    wireText("services-title", "services", "title");
+    wireText("contact-title", "contact", "title");
+    wireText("contact-text", "contact", "text");
+    wireText("contact-email", "contact", "email");
+  }
+
+  var _origRender = renderPage;
+  renderPage = function (data) {
+    _origRender(data);
+    wireAllEditors();
+  };
+
+  /* --------------------------------------------------------
+     INTERSECTION OBSERVER — Animations
+     -------------------------------------------------------- */
+  var observer = null;
+  function observeAnimations() {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll("[data-anim]").forEach(function (el) {
+      if (!el.classList.contains("is-visible")) observer.observe(el);
+    });
+  }
+
 })();
