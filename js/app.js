@@ -201,7 +201,7 @@
     if (!sizes) return;
     Object.keys(sizes).forEach(function (name) {
       var sec = document.querySelector('[data-section="' + name + '"]');
-      if (sec && sizes[name]) sec.style.paddingBottom = sizes[name] + "rem";
+      if (sec && sizes[name]) sec.style.minHeight = sizes[name] + "px";
     });
   }
 
