@@ -26,14 +26,14 @@
 
   <main>
     <header class="hero" id="hero" role="banner" data-section="hero">
-      <div class="hero__bg" id="hero-media-zone">
-        <div id="hero-media"></div>
+      <div class="hero__bg" data-cms-media="image">
+        <div data-cms-render id="hero-media"></div>
         <div class="hero__overlay"></div>
       </div>
       <div class="hero__content" data-anim="fade-up">
-        <div class="hero__badge">Production Audiovisuelle</div>
-        <h1 class="hero__title" id="hero-title"></h1>
-        <p class="hero__subtitle" id="hero-subtitle"></p>
+        <div class="hero__badge" data-cms-field="badge">Production Audiovisuelle</div>
+        <h1 class="hero__title" id="hero-title" data-cms-field="title"></h1>
+        <p class="hero__subtitle" id="hero-subtitle" data-cms-field="subtitle"></p>
         <div class="hero__scroll-hint">
           <span>Scroll</span>
           <div class="hero__scroll-line"></div>
@@ -42,56 +42,63 @@
     </header>
 
     <section class="video-loop" id="videoLoop" data-section="videoLoop" aria-label="Vidéo en boucle">
-      <div id="video-loop-media" class="video-loop__media"></div>
+      <div id="video-loop-media" class="video-loop__media" data-cms-media="videoLoop"></div>
       <div class="video-loop__overlay"></div>
       <div class="video-loop__inner" data-anim="fade-up">
         <div class="video-loop__rule"></div>
-        <h2 class="video-loop__title" id="video-loop-title"></h2>
+        <h2 class="video-loop__title" id="video-loop-title" data-cms-field="title"></h2>
         <div class="video-loop__rule"></div>
       </div>
     </section>
 
     <section class="video-play" id="videoPlay" data-section="videoPlay" aria-label="Showreel">
       <div class="video-play__inner" data-anim="fade-up">
-        <p class="video-play__label">Showreel</p>
-        <h2 class="video-play__title" id="video-play-title"></h2>
-        <div id="video-play-media" class="video-play__media">
+        <p class="video-play__label" data-cms-field="label">Showreel</p>
+        <h2 class="video-play__title" id="video-play-title" data-cms-field="title"></h2>
+        <div id="video-play-media" class="video-play__media" data-cms-media="video" data-cms-poster="poster">
           <div class="video-play__glow"></div>
+          <div data-cms-render></div>
         </div>
       </div>
     </section>
 
     <section class="about" id="about" data-section="about">
       <div class="about__inner">
-        <div class="about__media" id="about-media-zone" data-anim="fade-right">
-          <div id="about-media"></div>
+        <div class="about__media" data-cms-media="image" data-anim="fade-right">
+          <div data-cms-render id="about-media"></div>
         </div>
         <div class="about__text" data-anim="fade-left">
-          <p class="about__eyebrow">À propos</p>
-          <h2 class="about__title" id="about-title"></h2>
+          <p class="about__eyebrow" data-cms-field="eyebrow">À propos</p>
+          <h2 class="about__title" id="about-title" data-cms-field="title"></h2>
           <div class="about__divider"></div>
-          <p class="about__body" id="about-text"></p>
+          <p class="about__body" id="about-text" data-cms-field="text"></p>
         </div>
       </div>
     </section>
 
     <section class="services" id="services" data-section="services">
       <div class="services__inner" data-anim="fade-up">
-        <p class="services__eyebrow">Expertise</p>
-        <h2 class="services__title" id="services-title"></h2>
-        <div class="services__list" id="services-list"></div>
+        <p class="services__eyebrow" data-cms-field="eyebrow">Expertise</p>
+        <h2 class="services__title" id="services-title" data-cms-field="title"></h2>
+        <div class="services__list" id="services-list" data-cms-list="items"></div>
+        <template data-cms-card="items">
+          <div class="service-card">
+            <h3 class="service-card__title" data-cms-card-field="title"></h3>
+            <p class="service-card__description" data-cms-card-field="description"></p>
+          </div>
+        </template>
       </div>
     </section>
 
     <section class="contact" id="contact" data-section="contact">
       <div class="contact__inner" data-anim="fade-up">
-        <h2 class="contact__title" id="contact-title"></h2>
-        <p class="contact__text" id="contact-text"></p>
+        <h2 class="contact__title" id="contact-title" data-cms-field="title"></h2>
+        <p class="contact__text" id="contact-text" data-cms-field="text"></p>
         <p class="contact__email-row">
           <span class="contact__email-label">Email —</span>
-          <span id="contact-email" class="contact__email"></span>
+          <span id="contact-email" class="contact__email" data-cms-field="email"></span>
         </p>
-        <a class="contact__cta" href="#" id="contact-cta"></a>
+        <a class="contact__cta" href="#" id="contact-cta" data-cms-field="cta" data-cms-href="email"></a>
       </div>
     </section>
   </main>

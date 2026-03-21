@@ -4,6 +4,7 @@
       "hero": {
         "title": "L'image au service\nde votre vision",
         "subtitle": "OBSCURA conçoit des films, campagnes et expériences audiovisuelles pour les marques qui refusent l'ordinaire.",
+        "badge": "Production Audiovisuelle",
         "image": "images/hero.png",
         "imageWebp": "images/hero.webp",
         "imageAvif": "images/hero.avif"
@@ -14,6 +15,7 @@
       },
       "videoPlay": {
         "title": "Showreel 2026",
+        "label": "Showreel",
         "video": "https://videos.pexels.com/video-files/5752729/5752729-uhd_2560_1440_30fps.mp4",
         "poster": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1280&q=80&auto=format",
         "titlePosition": {
@@ -23,6 +25,7 @@
       },
       "services": {
         "title": "Notre expertise",
+        "eyebrow": "Expertise",
         "items": [
           {
             "title": "Films de marque",
@@ -52,15 +55,18 @@
       "hero": {
         "title": "Projets\nsélectionnés",
         "subtitle": "De la direction artistique à la livraison finale — chaque projet est un univers.",
+        "badge": "Production Audiovisuelle",
         "image": "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1920&q=85&auto=format"
       },
       "videoPlay": {
         "title": "Campagne «Horizon» — Maison Aeterna",
+        "label": "Showreel",
         "video": "https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4",
         "poster": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1280&q=80&auto=format"
       },
       "about": {
         "title": "Notre méthode",
+        "eyebrow": "À propos",
         "text": "Chaque collaboration commence par l'écoute. Nous plongeons dans votre univers, identifions les émotions à transmettre, et construisons un récit visuel sur mesure — de la pré-production au mastering final.",
         "image": "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=960&q=80&auto=format"
       },
@@ -80,10 +86,12 @@
       "hero": {
         "title": "Le Studio",
         "subtitle": "Un espace pensé pour la création, au cœur de Paris. Plateau, régie, post-production — tout sous un même toit.",
+        "badge": "Production Audiovisuelle",
         "image": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=1920&q=85&auto=format"
       },
       "about": {
         "title": "Équipement\n& savoir-faire",
+        "eyebrow": "À propos",
         "text": "RED V-Raptor, Arri Mini LF, optiques Cooke et Zeiss, steadicam, drones, studio son Dolby Atmos, suite DaVinci Resolve — nos outils sont au service du geste artistique, jamais l'inverse.",
         "image": "https://images.pexels.com/photos/3062545/pexels-photo-3062545.jpeg?auto=compress&w=960"
       },
@@ -93,6 +101,7 @@
       },
       "services": {
         "title": "Notre plateau",
+        "eyebrow": "Expertise",
         "items": [
           {
             "title": "Studio 350 m²",
