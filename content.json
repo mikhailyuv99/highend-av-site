@@ -4,7 +4,9 @@
       "hero": {
         "title": "L'image au service\nde votre vision",
         "subtitle": "OBSCURA conçoit des films, campagnes et expériences audiovisuelles pour les marques qui refusent l'ordinaire.",
-        "image": "https://images.unsplash.com/photo-1524712245354-2c4e5e7121c0?w=1920&q=85&auto=format"
+        "image": "images/hero.png",
+        "imageWebp": "images/hero.webp",
+        "imageAvif": "images/hero.avif"
       },
       "videoLoop": {
         "video": "https://videos.pexels.com/video-files/3571264/3571264-uhd_2560_1440_30fps.mp4",
@@ -13,14 +15,27 @@
       "videoPlay": {
         "title": "Showreel 2026",
         "video": "https://videos.pexels.com/video-files/5752729/5752729-uhd_2560_1440_30fps.mp4",
-        "poster": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1280&q=80&auto=format"
+        "poster": "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1280&q=80&auto=format",
+        "titlePosition": {
+          "x": 0,
+          "y": 0
+        }
       },
       "services": {
         "title": "Notre expertise",
         "items": [
-          { "title": "Films de marque", "description": "Écriture, production et post-production de films qui racontent votre identité avec force et élégance." },
-          { "title": "Captation live", "description": "Couverture multi-caméras d'événements, concerts, conférences — en direct ou en différé." },
-          { "title": "Motion design", "description": "Animation 2D/3D, habillage graphique et effets visuels pour enrichir chaque production." }
+          {
+            "title": "Films de marque",
+            "description": "Écriture, production et post-production de films qui racontent votre identité avec force et élégance."
+          },
+          {
+            "title": "Captation live",
+            "description": "Couverture multi-caméras d'événements, concerts, conférences — en direct ou en différé."
+          },
+          {
+            "title": "Motion design",
+            "description": "Animation 2D/3D, habillage graphique et effets visuels pour enrichir chaque production."
+          }
         ]
       },
       "contact": {
@@ -28,6 +43,9 @@
         "text": "Un projet, une idée, une ambition — parlons-en.",
         "email": "contact@obscura.studio",
         "cta": "Lancer un projet"
+      },
+      "sectionSizes": {
+        "hero": 629.3624877929688
       }
     },
     "work": {
@@ -51,6 +69,11 @@
         "text": "Discutons de votre vision.",
         "email": "contact@obscura.studio",
         "cta": "Nous contacter"
+      },
+      "sectionSizes": {
+        "about": 966,
+        "videoPlay": 1015.1375122070312,
+        "hero": 690.4000244140625
       }
     },
     "studio": {
@@ -71,9 +94,18 @@
       "services": {
         "title": "Notre plateau",
         "items": [
-          { "title": "Studio 350 m²", "description": "Cyclorama blanc, fond vert, éclairage LED piloté — adapté film, photo et XR." },
-          { "title": "Régie broadcast", "description": "Réalisation live multi-sources, streaming HD/4K, replay et graphismes temps réel." },
-          { "title": "Post-production", "description": "Étalonnage HDR, montage, sound design et mixage Atmos dans un environnement calibré." }
+          {
+            "title": "Studio 350 m²",
+            "description": "Cyclorama blanc, fond vert, éclairage LED piloté — adapté film, photo et XR."
+          },
+          {
+            "title": "Régie broadcast",
+            "description": "Réalisation live multi-sources, streaming HD/4K, replay et graphismes temps réel."
+          },
+          {
+            "title": "Post-production",
+            "description": "Étalonnage HDR, montage, sound design et mixage Atmos dans un environnement calibré."
+          }
         ]
       },
       "contact": {
@@ -84,7 +116,11 @@
       }
     }
   },
-  "pageOrder": ["index", "work", "studio"],
+  "pageOrder": [
+    "index",
+    "work",
+    "studio"
+  ],
   "theme": {
     "primaryColor": "#c4a55a"
   }
